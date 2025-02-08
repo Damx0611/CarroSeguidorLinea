@@ -1,0 +1,45 @@
+import board
+import digitalio
+
+class Perceptron:
+    def __init__(self, num_inputs):
+        self.weights = [0.0 for _ in range(num_inputs)]  # Inicializa los pesos
+        self.bias = 0.0  # Inicializa el sesgo
+
+    def predict(self, inputs):
+        activation = sum(i * w for i, w in zip(inputs, self.weights)) + self.bias
+        return 1 if activation >= 0 else 0
+
+    def train(self, training_data, labels, learning_rate=0.1, epochs=10):
+        for epoch in range(epochs):
+            print(f"Epoch {epoch + 1}:")
+            for data, label in zip(training_data, labels):
+                prediction = self.predict(data)
+                error = label - prediction
+                
+                # Actualiza los pesos y sesgo
+                self.weights = [w + learning_rate * error * d for d, w in zip(data, self.weights)]
+                self.bias += learning_rate * error
+                
+                print(f"Pesos: {self.weights}, Sesgo: {self.bias}")
+
+# Configuración del botón en la placa
+boton_pin = board.GP22
+boton = digitalio.DigitalInOut(boton_pin)
+boton.switch_to_input(pull=digitalio.Pull.UP)
+
+# Variable para el valor de PWM
+dispositivo_pwm = 100
+
+# Función para iniciar el entrenamiento del perceptrón
+def entrenar_perceptron():
+    global dispositivo_pwm
+    modelo = Perceptron(num_inputs=3)
+    datos_entrenamiento = [[1, 1, 1], [0, 1, 1], [0, 0, 0]] * 6
+    etiquetas = [1, 1, 0] * 6
+    
+    modelo.train(datos_entrenamiento, etiquetas, learning_rate=0.1, epochs=5)
+    dispositivo_pwm = modelo.predict([1, 1, 1]) * 65530  # Ajuste del PWM
+
+# Llamada a la función de entrenamiento
+entrenar_perceptron()
